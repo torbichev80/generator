@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Генератор идей</title>
 </head>
-<body style="margin:0;padding:20px;font-family:Arial,sans-serif">
-
+<body style="margin:0;padding:20px;font-family:Arial,sans-serif;background:#f0f0f0">
 <div style="max-width:600px;margin:0 auto">
   <div style="background:#000;color:#fff;padding:20px;border-radius:8px 8px 0 0">
     <h3 style="margin:0">Генератор идей</h3>
@@ -27,44 +26,64 @@
 </div>
 
 <script>
-const API='https://plainfrog-5107.torbichev.workers.dev';
-let sid=localStorage.getItem('sid')||'s_'+Date.now();
-localStorage.setItem('sid',sid);
-const msgs=document.getElementById('messages');
-const inp=document.getElementById('input');
-const btn=document.getElementById('send');
-const typ=document.getElementById('typing');
+const API = 'https://plainfrog-5107.torbichev.workers.dev';
+let sid = localStorage.getItem('sid') || 's_' + Date.now();
+localStorage.setItem('sid', sid);
 
-function add(txt,user){
-  const d=document.createElement('div');
-  d.style.cssText='padding:12px;border-radius:8px;margin-bottom:10px;'+(user?'background:#000;color:#fff;text-align:right':'background:#fff');
-  d.textContent=txt;
+const msgs = document.getElementById('messages');
+const inp = document.getElementById('input');
+const btn = document.getElementById('send');
+const typ = document.getElementById('typing');
+
+function add(txt, user) {
+  const d = document.createElement('div');
+  d.style.cssText = 'padding:12px;border-radius:8px;margin-bottom:10px;white-space:pre-wrap;' + 
+    (user ? 'background:#000;color:#fff;text-align:right' : 'background:#fff');
+  d.innerHTML = txt.replace(/\n/g, '<br>');
   msgs.appendChild(d);
-  msgs.scrollTop=msgs.scrollHeight;
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
-async function send(){
-  const msg=inp.value.trim();
-  if(!msg)return;
-  add(msg,true);
-  inp.value='';
-  typ.style.display='block';
-  btn.disabled=true;
-  try{
-    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatInput:msg,sessionId:sid})});
-    const d=await r.json();
-    typ.style.display='none';
-    add(d.response||'Ошибка',false);
-  }catch(e){
-    typ.style.display='none';
-    add('Ошибка соединения',false);
+async function send() {
+  const msg = inp.value.trim();
+  if(!msg) return;
+  
+  add(msg, true);
+  inp.value = '';
+  typ.style.display = 'block';
+  btn.disabled = true;
+  
+  console.log('Отправка:', {chatInput: msg, sessionId: sid});
+  
+  try {
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({chatInput: msg, sessionId: sid})
+    });
+    
+    console.log('Статус ответа:', r.status);
+    const d = await r.json();
+    console.log('Получены данные:', d);
+    
+    typ.style.display = 'none';
+    
+    const responseText = d.response || d.output || d.message || 'Нет ответа от сервера';
+    add(responseText, false);
+    
+  } catch(e) {
+    console.error('Ошибка:', e);
+    typ.style.display = 'none';
+    add('Ошибка соединения: ' + e.message, false);
   }
-  btn.disabled=false;
+  
+  btn.disabled = false;
 }
 
-btn.onclick=send;
-inp.onkeypress=e=>{if(e.key=='Enter')send()};
+btn.onclick = send;
+inp.onkeypress = e => {
+  if(e.key === 'Enter') send();
+};
 </script>
-
 </body>
 </html>
