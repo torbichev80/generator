@@ -26,7 +26,7 @@
 </div>
 
 <script>
-const API = 'const API = 'https://productgames2025.app.n8n.cloud/webhook/a0b4e248-d374-482f-ad95-9f12c5a22140';';
+const API = 'https://plainfrog-5107.torbichev.workers.dev';
 let sid = localStorage.getItem('sid') || 's_' + Date.now();
 localStorage.setItem('sid', sid);
 
@@ -46,14 +46,17 @@ function add(txt, user) {
 
 async function send() {
   const msg = inp.value.trim();
-  if(!msg) return;
+  if (!msg) return;
+  
+  const timeout = setTimeout(() => {
+    btn.disabled = false;
+    typ.style.display = 'none';
+  }, 10000);
   
   add(msg, true);
   inp.value = '';
   typ.style.display = 'block';
   btn.disabled = true;
-  
-  console.log('Отправка:', {chatInput: msg, sessionId: sid});
   
   try {
     const r = await fetch(API, {
@@ -62,27 +65,25 @@ async function send() {
       body: JSON.stringify({chatInput: msg, sessionId: sid})
     });
     
-    console.log('Статус ответа:', r.status);
+    clearTimeout(timeout);
     const d = await r.json();
-    console.log('Получены данные:', d);
-    
     typ.style.display = 'none';
     
-    const responseText = d.response || d.output || d.message || 'Нет ответа от сервера';
+    const responseText = d.response || d.output || d.message || 'Нет ответа';
     add(responseText, false);
     
   } catch(e) {
-    console.error('Ошибка:', e);
+    clearTimeout(timeout);
     typ.style.display = 'none';
-    add('Ошибка соединения: ' + e.message, false);
+    add('Ошибка: ' + e.message, false);
   }
   
   btn.disabled = false;
 }
 
 btn.onclick = send;
-inp.onkeypress = e => {
-  if(e.key === 'Enter') send();
+inp.onkeypress = (e) => {
+  if (e.key === 'Enter') send();
 };
 </script>
 </body>
